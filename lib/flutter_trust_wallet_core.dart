@@ -3,6 +3,8 @@ library flutter_trust_wallet_core;
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:convert/convert.dart';
+
 import 'trust_wallet_core_ffi.dart';
 import 'extensions.dart';
 
@@ -30,7 +32,6 @@ part 'core/ethereum_abi_value.dart';
 part 'core/coin_type_configuration.dart';
 part 'core/ethereum_abi_function.dart';
 part 'core/hrp.dart';
-
 
 
 class FlutterTrustWalletCore {
