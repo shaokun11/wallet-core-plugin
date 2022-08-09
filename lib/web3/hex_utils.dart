@@ -9,21 +9,23 @@ class HexUtils {
   }
 
   static Uint8List hexToBytes(String hexStr) {
+    if (hexStr.length % 2 != 0) {
+      hexStr = '0$hexStr';
+    }
     final bytes = hex.decode(strip0x(hexStr));
     if (bytes is Uint8List) return bytes;
-
     return Uint8List.fromList(bytes);
   }
 
-  static int2Bytes (BigInt num) {
+  static int2Bytes(BigInt num) {
     var _hex = num.toRadixString(16);
     if (_hex.length % 2 != 0) {
-      _hex = '0$hex';
+      _hex = '0$_hex';
     }
     return hex.decode(_hex);
   }
 
- static String bytesToHex(
+  static String bytesToHex(
     List<int> bytes, {
     bool include0x = false,
     int? forcePadLength,
