@@ -16,6 +16,7 @@ dependencies:
   fixnum: ^1.0.0
   convert: ^3.0.1
   http: ^0.13.5
+  web3dart:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -30,10 +31,10 @@ flutter:
       ios:
         pluginClass: FlutterTrustWalletCorePlugin
 
-  # To add assets to your plugin package, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+    # To add assets to your plugin package, add an assets section, like this:
+#  assets:
+#    - assets/abi/
+  #     - images/a_dot_ham.jpeg
   #
   # For details regarding assets in packages, see
   # https://flutter.dev/assets-and-images/#from-packages
