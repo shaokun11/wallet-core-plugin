@@ -7,7 +7,7 @@ import 'package:convert/convert.dart';
 
 import 'trust_wallet_core_ffi.dart';
 import 'extensions.dart';
-
+export 'web3/web3_eth.dart';
 
 
 part 'core/mnemonic.dart';
