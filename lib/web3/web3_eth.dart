@@ -34,13 +34,11 @@ class Web3Eth {
   }
 
   getNonce(String address) {
-    return this
-        ._ethClient
-        .getTransactionCount(EthereumAddress.fromHex(address));
+    return _ethClient.getTransactionCount(EthereumAddress.fromHex(address));
   }
 
   getBalance(String address) {
-    return this._ethClient.getBalance(EthereumAddress.fromHex(address));
+    return _ethClient.getBalance(EthereumAddress.fromHex(address));
   }
 
   EthereumAddress encodingAddress(String address) {
@@ -61,7 +59,7 @@ class Web3Eth {
   estimateGas(String from, String to, BigInt gasPrice, String hexData,
       {BigInt? value}) {
     value = value != null ? value : BigInt.from(0);
-    return this._ethClient.estimateGas(
+    return _ethClient.estimateGas(
         to: EthereumAddress.fromHex(to),
         sender: EthereumAddress.fromHex(from),
         gasPrice: EtherAmount.inWei(value),
@@ -90,13 +88,13 @@ class Web3Eth {
     );
     final output = Ethereum.SigningOutput.fromBuffer(signed);
     final signTx = "0x" + hex.encode(output.encoded);
-    return this._ethClient.sendRawTransaction(HexUtils.hexToBytes(signTx));
+    return _ethClient.sendRawTransaction(HexUtils.hexToBytes(signTx));
   }
 
   call(DeployedContract contract, String method, List<dynamic> params,
       String from) {
     final fun = contract.function(method);
-    return this._ethClient.call(
+    return _ethClient.call(
         contract: contract,
         function: fun,
         params: params,
@@ -108,7 +106,7 @@ class Web3Eth {
       {BigInt? value}) async {
     int coin = TWCoinType.TWCoinTypeEthereum;
     var ethValue;
-    var key = this._hexToPrivateKey(privateKey).data();
+    var key = _hexToPrivateKey(privateKey).data();
     if (value != null) {
       ethValue = hex.decode(hexData);
     }
@@ -127,6 +125,6 @@ class Web3Eth {
       coin,
     ));
     final signTx = "0x" + hex.encode(output.encoded);
-    return this._ethClient.sendRawTransaction(HexUtils.hexToBytes(signTx));
+    return _ethClient.sendRawTransaction(HexUtils.hexToBytes(signTx));
   }
 }
