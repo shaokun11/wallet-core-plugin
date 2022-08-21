@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart';
 import 'package:convert/convert.dart';
 import 'package:flutter_trust_wallet_core/protobuf/Ethereum.pb.dart'
-    as Ethereum;
+as Ethereum;
 import 'package:flutter_trust_wallet_core/web3/hex_utils.dart';
 import 'package:web3dart/web3dart.dart';
 import '../flutter_trust_wallet_core.dart';
@@ -50,44 +50,55 @@ class Web3Eth {
         EthereumAddress.fromHex(contract.address));
   }
 
-  buildContractHexData(
-      DeployedContract contract, String method, List<dynamic> params) {
+  buildContractHexData(DeployedContract contract, String method,
+      List<dynamic> params) {
     final function = contract.function(method);
     return HexUtils.bytesToHex(function.encodeCall(params));
   }
 
-  estimateGas(String from, String to, BigInt gasPrice, String hexData,
+  estimateGas(String from, String to, BigInt baseFeePerGas,
+      BigInt maxPriorityFeePerGas, String hexData,
       {BigInt? value}) {
+    final maxFeePerGas = baseFeePerGas + maxPriorityFeePerGas;
     value = value != null ? value : BigInt.from(0);
     return _ethClient.estimateGas(
         to: EthereumAddress.fromHex(to),
         sender: EthereumAddress.fromHex(from),
-        gasPrice: EtherAmount.inWei(value),
+        maxFeePerGas: EtherAmount.inWei(maxFeePerGas),
+        maxPriorityFeePerGas: EtherAmount.inWei(maxPriorityFeePerGas),
         value: EtherAmount.inWei(value),
         data: HexUtils.hexToBytes(hexData));
   }
 
-  transferEth(String to, BigInt value, BigInt gasPrice, BigInt nonce,
-      BigInt gasLimit, String privateKey) async {
+  transferEth(String to,
+      BigInt value,
+      BigInt baseFeePerGas,
+      BigInt maxInclusionFeePerGas,
+      BigInt nonce,
+      BigInt gasLimit,
+      String privateKey) async {
     int coin = TWCoinType.TWCoinTypeEthereum;
+    final maxFeePerGas = baseFeePerGas + maxInclusionFeePerGas;
     var pk =
-        PrivateKey.createWithData(Uint8List.fromList(hex.decode(privateKey)));
+    PrivateKey.createWithData(Uint8List.fromList(hex.decode(privateKey)));
     var signerInput = Ethereum.SigningInput(
-        chainId: HexUtils.int2Bytes(BigInt.from(this.chainId)),
+        chainId: HexUtils.int2Bytes(BigInt.from(chainId)),
         nonce: HexUtils.int2Bytes(nonce),
         toAddress: to,
+        txMode: Ethereum.TransactionMode.Enveloped,
+        maxFeePerGas: HexUtils.int2Bytes(maxFeePerGas),
+        maxInclusionFeePerGas: HexUtils.int2Bytes(maxInclusionFeePerGas),
         gasLimit: HexUtils.int2Bytes(gasLimit),
         transaction: Ethereum.Transaction(
             transfer: Ethereum.Transaction_Transfer(
                 amount: HexUtils.int2Bytes(value))),
-        gasPrice: HexUtils.int2Bytes(gasPrice),
         privateKey: pk.data());
     final signed = AnySigner.sign(
       signerInput.writeToBuffer(),
       coin,
     );
     final output = Ethereum.SigningOutput.fromBuffer(signed);
-    final signTx = "0x" + hex.encode(output.encoded);
+    final signTx = "0x${hex.encode(output.encoded)}";
     return _ethClient.sendRawTransaction(HexUtils.hexToBytes(signTx));
   }
 
@@ -101,8 +112,8 @@ class Web3Eth {
         sender: EthereumAddress.fromHex(from));
   }
 
-  send(String from, String contract, String hexData, BigInt gasPrice,
-      BigInt gasLimit, BigInt nonce, String privateKey,
+  send(String from, String contract, String hexData, BigInt baseFee,
+      BigInt priorityFee, BigInt gasLimit, BigInt nonce, String privateKey,
       {BigInt? value}) async {
     int coin = TWCoinType.TWCoinTypeEthereum;
     var ethValue;
@@ -110,11 +121,14 @@ class Web3Eth {
     if (value != null) {
       ethValue = hex.decode(hexData);
     }
+    final maxFee = baseFee + priorityFee;
     var signerInput = Ethereum.SigningInput(
-        chainId: HexUtils.int2Bytes(BigInt.from(this.chainId)),
+        chainId: HexUtils.int2Bytes(BigInt.from(chainId)),
         privateKey: key,
-        gasPrice: HexUtils.int2Bytes(gasPrice),
         toAddress: contract,
+        txMode: Ethereum.TransactionMode.Enveloped,
+        maxInclusionFeePerGas: HexUtils.int2Bytes(priorityFee),
+        maxFeePerGas: HexUtils.int2Bytes(maxFee),
         gasLimit: HexUtils.int2Bytes(gasLimit),
         nonce: HexUtils.int2Bytes(nonce),
         transaction: Ethereum.Transaction(
@@ -124,7 +138,7 @@ class Web3Eth {
       signerInput.writeToBuffer(),
       coin,
     ));
-    final signTx = "0x" + hex.encode(output.encoded);
+    final signTx = "0x${hex.encode(output.encoded)}";
     return _ethClient.sendRawTransaction(HexUtils.hexToBytes(signTx));
   }
 }
