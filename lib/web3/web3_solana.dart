@@ -24,6 +24,16 @@ class Web3Solana {
     return HttpHelper.sendRpc(url, "getRecentBlockhash", '');
   }
 
+  getSOLBalance(String account) {
+    return HttpHelper.sendRpc(url, "getBalance", account);
+  }
+
+  getSPLTokenBalance(String account, String token) {
+    var tokenAddress =
+    SolanaAddress.createWithString(account).defaultTokenAddress(token);
+    return HttpHelper.sendRpc(url, "getTokenAccountBalance", tokenAddress!);
+  }
+
   sendSOl(String nonce, String to, BigInt amount, String privateKey) {
     final pk = _hexToPrivateKey(privateKey);
     final signInput = Solana.SigningInput(
@@ -41,9 +51,9 @@ class Web3Solana {
   sendToken(String from, String to, String token, BigInt amount, int decimals,
       String nonce, String privateKey) {
     var fromTokenAddress =
-        SolanaAddress.createWithString(from).defaultTokenAddress(token);
+    SolanaAddress.createWithString(from).defaultTokenAddress(token);
     var toTokenAddress =
-        SolanaAddress.createWithString(to).defaultTokenAddress(token);
+    SolanaAddress.createWithString(to).defaultTokenAddress(token);
     final pk = _hexToPrivateKey(privateKey);
     final signInput2 = Solana.SigningInput(
         recentBlockhash: nonce,
@@ -55,7 +65,7 @@ class Web3Solana {
             amount: $fixed_num.Int64.parseInt(amount.toString()),
             decimals: decimals));
     final sign =
-        AnySigner.sign(signInput2.writeToBuffer(), TWCoinType.TWCoinTypeSolana);
+    AnySigner.sign(signInput2.writeToBuffer(), TWCoinType.TWCoinTypeSolana);
     final signOutput = Solana.SigningOutput.fromBuffer(sign.toList());
     final signTx = signOutput.encoded;
     return HttpHelper.sendRpc(url, "sendTransaction", signTx);

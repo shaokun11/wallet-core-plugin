@@ -39,7 +39,10 @@ class Web3Btc {
       utxo.add(Bitcoin.UnspentTransaction(
         amount: $fixed_num.Int64.parseInt(element.value.toString()),
         outPoint: Bitcoin.OutPoint(
-          hash: hex.decode(element.txid).reversed.toList(),
+          hash: hex
+              .decode(element.txid)
+              .reversed
+              .toList(),
           index: element.vout,
         ),
         script: script,
@@ -74,7 +77,10 @@ class Web3Btc {
       utxo.add(Bitcoin.UnspentTransaction(
         amount: $fixed_num.Int64.parseInt(element.value.toString()),
         outPoint: Bitcoin.OutPoint(
-          hash: hex.decode(element.txid).reversed.toList(),
+          hash: hex
+              .decode(element.txid)
+              .reversed
+              .toList(),
           index: element.vout,
         ),
         script: script,
