@@ -8,6 +8,20 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.9.0"
+  bip39:
+    dependency: transitive
+    description:
+      name: bip39
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.0.6"
+  borsh_annotation:
+    dependency: transitive
+    description:
+      name: borsh_annotation
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.3.1+1"
   characters:
     dependency: transitive
     description:
@@ -36,6 +50,27 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "3.0.2"
+  cryptography:
+    dependency: transitive
+    description:
+      name: cryptography
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.0.5"
+  decimal:
+    dependency: transitive
+    description:
+      name: decimal
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.2.0"
+  ed25519_hd_key:
+    dependency: transitive
+    description:
+      name: ed25519_hd_key
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.2.0"
   eip55:
     dependency: transitive
     description:
@@ -62,6 +97,20 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  freezed_annotation:
+    dependency: transitive
+    description:
+      name: freezed_annotation
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.1.0"
+  hex:
+    dependency: transitive
+    description:
+      name: hex
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.2.0"
   http:
     dependency: "direct main"
     description:
@@ -83,6 +132,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "0.6.4"
+  json_annotation:
+    dependency: transitive
+    description:
+      name: json_annotation
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "4.6.0"
   json_rpc_2:
     dependency: transitive
     description:
@@ -111,6 +167,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.8.2"
+  pinenacl:
+    dependency: transitive
+    description:
+      name: pinenacl
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.3.4"
   pointycastle:
     dependency: transitive
     description:
@@ -125,11 +188,25 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.1.0"
+  rational:
+    dependency: transitive
+    description:
+      name: rational
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.2.0"
   sky_engine:
     dependency: transitive
     description: flutter
     source: sdk
     version: "0.0.99"
+  solana:
+    dependency: "direct main"
+    description:
+      name: solana
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.26.0"
   source_span:
     dependency: transitive
     description:
@@ -200,6 +277,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.4.1"
+  web_socket_channel:
+    dependency: transitive
+    description:
+      name: web_socket_channel
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.2.0"
 sdks:
   dart: ">=2.16.0-100.0.dev <3.0.0"
   flutter: ">=1.20.0"

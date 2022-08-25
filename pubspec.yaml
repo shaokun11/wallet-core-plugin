@@ -16,6 +16,7 @@ dependencies:
   fixnum: ^1.0.0
   convert: ^3.0.1
   http: ^0.13.5
+  solana: ^0.26.0
   web3dart:
 
 # For information on the generic Dart part of this file, see the
