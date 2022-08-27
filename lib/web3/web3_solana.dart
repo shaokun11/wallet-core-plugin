@@ -40,7 +40,7 @@ class Web3Solana {
   }
 
   getTokenMetadata(String token) {
-    GetMetaplexMetadata(client)
+   return GetMetaplexMetadata(client)
         .getMetadata(mint: Ed25519HDPublicKey.fromBase58(token));
   }
 
