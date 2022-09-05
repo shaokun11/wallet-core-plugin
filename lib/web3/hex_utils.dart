@@ -25,6 +25,17 @@ class HexUtils {
     return hex.decode(_hex);
   }
 
+  static int? hexToInt(String hex) {
+    int? val;
+    if (hex.toUpperCase().contains("0X")) {
+      String desString = hex.substring(2);
+      val = int.tryParse("0x$desString");
+    } else {
+      val = int.tryParse("0x$hex");
+    }
+    return val;
+  }
+
   static String bytesToHex(
     List<int> bytes, {
     bool include0x = false,

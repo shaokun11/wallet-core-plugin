@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart';
 import 'package:convert/convert.dart';
 import 'package:flutter_trust_wallet_core/protobuf/Ethereum.pb.dart'
-as Ethereum;
+    as Ethereum;
 import 'package:flutter_trust_wallet_core/web3/hex_utils.dart';
 import 'package:web3dart/web3dart.dart';
 import '../flutter_trust_wallet_core.dart';
@@ -50,8 +50,8 @@ class Web3Eth {
         EthereumAddress.fromHex(contract.address));
   }
 
-  buildContractHexData(DeployedContract contract, String method,
-      List<dynamic> params) {
+  buildContractHexData(
+      DeployedContract contract, String method, List<dynamic> params) {
     final function = contract.function(method);
     return HexUtils.bytesToHex(function.encodeCall(params));
   }
@@ -70,7 +70,8 @@ class Web3Eth {
         data: HexUtils.hexToBytes(hexData));
   }
 
-  transferEth(String to,
+  transferEth(
+      String to,
       BigInt value,
       BigInt baseFeePerGas,
       BigInt maxInclusionFeePerGas,
@@ -79,8 +80,7 @@ class Web3Eth {
       String privateKey) async {
     int coin = TWCoinType.TWCoinTypeEthereum;
     final maxFeePerGas = baseFeePerGas + maxInclusionFeePerGas;
-    var pk =
-    PrivateKey.createWithData(Uint8List.fromList(hex.decode(privateKey)));
+    var pk = _hexToPrivateKey(privateKey);
     var signerInput = Ethereum.SigningInput(
         chainId: HexUtils.int2Bytes(BigInt.from(chainId)),
         nonce: HexUtils.int2Bytes(nonce),
@@ -112,20 +112,22 @@ class Web3Eth {
         sender: EthereumAddress.fromHex(from));
   }
 
-  send(String from, String contract, String hexData, BigInt baseFee,
+  send(String from, String to, String hexData, BigInt baseFee,
       BigInt priorityFee, BigInt gasLimit, BigInt nonce, String privateKey,
       {BigInt? value}) async {
     int coin = TWCoinType.TWCoinTypeEthereum;
     var ethValue;
-    var key = _hexToPrivateKey(privateKey).data();
+    var key = _hexToPrivateKey(privateKey);
     if (value != null) {
-      ethValue = hex.decode(hexData);
+      ethValue = HexUtils.int2Bytes(value);
+    } else {
+      ethValue = null;
     }
     final maxFee = baseFee + priorityFee;
     var signerInput = Ethereum.SigningInput(
         chainId: HexUtils.int2Bytes(BigInt.from(chainId)),
-        privateKey: key,
-        toAddress: contract,
+        privateKey: key.data(),
+        toAddress: to,
         txMode: Ethereum.TransactionMode.Enveloped,
         maxInclusionFeePerGas: HexUtils.int2Bytes(priorityFee),
         maxFeePerGas: HexUtils.int2Bytes(maxFee),

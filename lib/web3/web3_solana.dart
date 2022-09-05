@@ -6,6 +6,7 @@ import 'package:flutter_trust_wallet_core/web3/http_helper.dart';
 import 'package:solana/dto.dart';
 import 'package:solana/metaplex.dart';
 import 'package:solana/solana.dart';
+import 'package:web3dart/crypto.dart';
 import '../flutter_trust_wallet_core.dart';
 import '../trust_wallet_core_ffi.dart';
 import 'package:fixnum/fixnum.dart' as $fixed_num;
@@ -18,6 +19,19 @@ class Web3Solana {
   Web3Solana(String url) {
     this.url = url;
     this.client = RpcClient(url);
+
+  }
+
+  signTx(){
+
+    // return signTransaction(recentBlockhash, message, signers);
+  }
+  signAndSend() {
+    // return this.client.signAndSendTransaction(message, signers);
+  }
+
+  signMsg(){
+    // return sign(messageHash, privateKey);
   }
 
   PrivateKey _hexToPrivateKey(String privateKey) {
