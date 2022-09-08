@@ -116,7 +116,8 @@ class Web3Eth {
         sender: EthereumAddress.fromHex(from));
   }
 
-  ethSign(payload, pk) {
+  ethSign(data, pk) {
+    final payload = data["data"];
     final m = payload["m"];
     if (m == "eth_sign") {
       return EthSigUtil.signMessage(message: payload, privateKey: pk);
