@@ -22,6 +22,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "0.3.1+1"
+  buffer:
+    dependency: transitive
+    description:
+      name: buffer
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.1.1"
   characters:
     dependency: transitive
     description:
@@ -78,6 +85,20 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.0.2"
+  equatable:
+    dependency: transitive
+    description:
+      name: equatable
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.0.5"
+  eth_sig_util:
+    dependency: "direct main"
+    description:
+      name: eth_sig_util
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.0.9"
   ffi:
     dependency: "direct main"
     description:

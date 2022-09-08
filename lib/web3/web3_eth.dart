@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:ffi';
 import 'dart:typed_data';
+import 'package:eth_sig_util/eth_sig_util.dart';
+import 'package:flutter_trust_wallet_core/web3/http_helper.dart';
 import 'package:http/http.dart';
 import 'package:convert/convert.dart';
 import 'package:flutter_trust_wallet_core/protobuf/Ethereum.pb.dart'
@@ -8,6 +12,7 @@ import 'package:web3dart/web3dart.dart';
 import '../flutter_trust_wallet_core.dart';
 import '../trust_wallet_core_ffi.dart';
 export './contract_abi.dart';
+import 'dart:math';
 
 class Web3EthContract {
   const Web3EthContract(this.abi, this.name, this.address);
@@ -112,30 +117,117 @@ class Web3Eth {
         sender: EthereumAddress.fromHex(from));
   }
 
+  ethSign(payload, pk) {
+    final m = payload["m"];
+    if (m == "eth_sign") {
+      return EthSigUtil.signMessage(message: payload, privateKey: pk);
+    }
+    if (m == "personal_sign") {
+      return EthSigUtil.signPersonalMessage(message: payload, privateKey: pk);
+    }
+    if (m == "eth_signTypedData_v3") {
+      return EthSigUtil.signTypedData(
+          jsonData: jsonEncode(payload),
+          version: TypedDataVersion.V3,
+          privateKey: pk);
+    }
+    if (m == "eth_signTypedData_v4") {
+      return EthSigUtil.signTypedData(
+          jsonData: jsonEncode(payload),
+          version: TypedDataVersion.V4,
+          privateKey: pk);
+    }
+    if (m == "eth_signTypedData") {
+      return EthSigUtil.signTypedData(
+          jsonData: jsonEncode(payload),
+          version: TypedDataVersion.V1,
+          privateKey: pk);
+    }
+  }
+
+  parseWebBrowserObj(payload) async {
+    var from = payload["from"];
+    var to = payload["to"];
+    var data = HexUtils.strip0x(payload["data"]);
+    var gasLimit = BigInt.from(HexUtils.hexToInt(payload["gas"])!);
+    var value = BigInt.from(HexUtils.hexToInt(payload["value"])!);
+    var parse = await HttpHelper.post(
+        "https://wallet.csfun.io/api/abi/decode", jsonEncode({data: data}));
+    var action = parse.result["action"];
+    var parseRes = {};
+    if (action.length > 0) {
+      // parse success
+      parseRes = parse.result["data"];
+      parseRes["token"] = to;
+      if (action == "transfer") {
+        parseRes["from"] = from;
+      }
+      try {
+        var symbol = await this.call(
+            DeployedContract(ContractAbi.fromJson(ERC20Token, 'erc721_erc20'), to),
+            "symbol",
+            [],
+            from);
+        parseRes["symbol"] = symbol;
+      } catch (e) {}
+      // more metadata
+      try {
+        // erc20
+        var decimals = await this.call(
+            DeployedContract(ContractAbi.fromJson(ERC20Token, 'erc20'), to),
+            "decimals",
+            [],
+            from);
+        // transfer and approve
+        if (parseRes["amount"]) {
+          parseRes["amount"] =
+              BigInt.parse(parseRes["amount"]) / BigInt.from(pow(10, decimals));
+        }
+      } catch (e) {}
+    }
+    return {
+      "send": {from, to, data, gasLimit, value},
+      "meta": parseRes
+    };
+  }
+
   send(String from, String to, String hexData, BigInt baseFee,
       BigInt priorityFee, BigInt gasLimit, BigInt nonce, String privateKey,
-      {BigInt? value}) async {
+      {BigInt? value, BigInt? gasPrice}) async {
     int coin = TWCoinType.TWCoinTypeEthereum;
     var ethValue;
     var key = _hexToPrivateKey(privateKey);
     if (value != null) {
       ethValue = HexUtils.int2Bytes(value);
-    } else {
-      ethValue = null;
     }
-    final maxFee = baseFee + priorityFee;
-    var signerInput = Ethereum.SigningInput(
-        chainId: HexUtils.int2Bytes(BigInt.from(chainId)),
-        privateKey: key.data(),
-        toAddress: to,
-        txMode: Ethereum.TransactionMode.Enveloped,
-        maxInclusionFeePerGas: HexUtils.int2Bytes(priorityFee),
-        maxFeePerGas: HexUtils.int2Bytes(maxFee),
-        gasLimit: HexUtils.int2Bytes(gasLimit),
-        nonce: HexUtils.int2Bytes(nonce),
-        transaction: Ethereum.Transaction(
-            contractGeneric: Ethereum.Transaction_ContractGeneric(
-                amount: ethValue, data: hex.decode(hexData))));
+    var signerInput;
+    if (gasPrice != null) {
+      signerInput = Ethereum.SigningInput(
+          chainId: HexUtils.int2Bytes(BigInt.from(chainId)),
+          privateKey: key.data(),
+          toAddress: to,
+          txMode: Ethereum.TransactionMode.Legacy,
+          gasPrice: HexUtils.int2Bytes(gasPrice),
+          gasLimit: HexUtils.int2Bytes(gasLimit),
+          nonce: HexUtils.int2Bytes(nonce),
+          transaction: Ethereum.Transaction(
+              contractGeneric: Ethereum.Transaction_ContractGeneric(
+                  amount: ethValue, data: hex.decode(hexData))));
+    } else {
+      final maxFee = baseFee + priorityFee;
+      signerInput = Ethereum.SigningInput(
+          chainId: HexUtils.int2Bytes(BigInt.from(chainId)),
+          privateKey: key.data(),
+          toAddress: to,
+          txMode: Ethereum.TransactionMode.Enveloped,
+          maxInclusionFeePerGas: HexUtils.int2Bytes(priorityFee),
+          maxFeePerGas: HexUtils.int2Bytes(maxFee),
+          gasLimit: HexUtils.int2Bytes(gasLimit),
+          nonce: HexUtils.int2Bytes(nonce),
+          transaction: Ethereum.Transaction(
+              contractGeneric: Ethereum.Transaction_ContractGeneric(
+                  amount: ethValue, data: hex.decode(hexData))));
+    }
     final output = Ethereum.SigningOutput.fromBuffer(AnySigner.sign(
       signerInput.writeToBuffer(),
       coin,
