@@ -143,6 +143,7 @@ class Web3Eth {
           version: TypedDataVersion.V1,
           privateKey: pk);
     }
+    return "";
   }
 
   parseWebBrowserObj(payload) async {
