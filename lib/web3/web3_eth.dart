@@ -116,14 +116,13 @@ class Web3Eth {
         sender: EthereumAddress.fromHex(from));
   }
 
-  ethSign(data, pk) {
+  ethSign(m,data, pk) {
     final payload = data["data"];
-    final m = payload["m"];
     if (m == "eth_sign") {
       return EthSigUtil.signMessage(message: payload, privateKey: pk);
     }
     if (m == "personal_sign") {
-      return EthSigUtil.signPersonalMessage(message: payload, privateKey: pk);
+      return EthSigUtil.signPersonalMessage(message: HexUtils.hexToBytes(payload), privateKey: pk);
     }
     if (m == "eth_signTypedData_v3") {
       return EthSigUtil.signTypedData(
