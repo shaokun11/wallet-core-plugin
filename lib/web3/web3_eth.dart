@@ -1,8 +1,7 @@
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:typed_data';
+import 'package:dio/dio.dart';
 import 'package:eth_sig_util/eth_sig_util.dart';
-import 'package:flutter_trust_wallet_core/web3/http_helper.dart';
 import 'package:http/http.dart';
 import 'package:convert/convert.dart';
 import 'package:flutter_trust_wallet_core/protobuf/Ethereum.pb.dart'
@@ -150,46 +149,67 @@ class Web3Eth {
     var from = payload["from"];
     var to = payload["to"];
     var data = HexUtils.strip0x(payload["data"]);
+    var value = payload["value"];
     var gasLimit = BigInt.from(HexUtils.hexToInt(payload["gas"])!);
-    var value = BigInt.from(HexUtils.hexToInt(payload["value"])!);
-    var parse = await HttpHelper.post(
-        "https://wallet.csfun.io/api/abi/decode", jsonEncode({data: data}));
-    var action = parse.result["action"];
-    var parseRes = {};
-    if (action.length > 0) {
-      // parse success
-      parseRes = parse.result["data"];
-      parseRes["token"] = to;
-      if (action == "transfer") {
-        parseRes["from"] = from;
-      }
-      try {
-        var symbol = await this.call(
-            DeployedContract(ContractAbi.fromJson(ERC20Token, 'erc721_erc20'), to),
-            "symbol",
-            [],
-            from);
-        parseRes["symbol"] = symbol;
-      } catch (e) {}
-      // more metadata
-      try {
-        // erc20
-        var decimals = await this.call(
-            DeployedContract(ContractAbi.fromJson(ERC20Token, 'erc20'), to),
-            "decimals",
-            [],
-            from);
-        // transfer and approve
-        if (parseRes["amount"]) {
-          parseRes["amount"] =
-              BigInt.parse(parseRes["amount"]) / BigInt.from(pow(10, decimals));
-        }
-      } catch (e) {}
+    if (value != null) {
+      value = BigInt.from(HexUtils.hexToInt(payload["value"])!);
+    } else {
+      value = BigInt.zero;
     }
-    return {
-      "send": {from, to, data, gasLimit, value},
-      "meta": parseRes
-    };
+    var send = new Map();
+    send["from"] = from;
+    send["to"] = to;
+    send["data"] = data;
+    send["gasLimit"] = gasLimit;
+    send["value"] = value;
+    var parseRes = {};
+    var dio = Dio();
+    try {
+      var response = await dio.post('https://wallet.csfun.io/api/abi/decode',
+          data: {'data': payload["data"]});
+      if (response.statusCode == 200) {
+        var data = response.data;
+        if (data["code"] == 2000) {
+          var parse = data["data"];
+          var action = parse["action"];
+          if (action.length > 0) {
+            // parse success
+            parseRes = parse["data"];
+            parseRes["token"] = to;
+            if (action == "transfer" || action == "approve") {
+              parseRes["from"] = from;
+            }
+            try {
+              var symbol = await this.call(
+                  DeployedContract(
+                      ContractAbi.fromJson(ERC20Token, 'erc721_erc20'),
+                      encodingAddress(to)),
+                  "symbol",
+                  [],
+                  from);
+              parseRes["symbol"] = symbol[0];
+            } catch (e) {}
+            // more metadata
+            try {
+              // erc20
+              var decimals = await this.call(
+                  DeployedContract(ContractAbi.fromJson(ERC20Token, 'erc20'),
+                      encodingAddress(to)),
+                  "decimals",
+                  [],
+                  from);
+              // transfer and approve
+              if (parseRes["amount"] != null) {
+                parseRes["amount"] = (BigInt.parse(parseRes["amount"]) /
+                        BigInt.from(pow(10, decimals[0])))
+                    .toString();
+              }
+            } catch (e) {}
+          }
+        }
+      }
+    } catch (e) {}
+    return {"send": send, "meta": parseRes};
   }
 
   send(String from, String to, String hexData, BigInt baseFee,

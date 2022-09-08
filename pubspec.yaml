@@ -17,6 +17,7 @@ dependencies:
   convert: ^3.0.1
   http: ^0.13.5
   solana: ^0.26.0
+  dio: ^4.0.6
   web3dart:
   eth_sig_util: ^0.0.9
 
