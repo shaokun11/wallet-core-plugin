@@ -118,6 +118,9 @@ class Web3Eth {
 
   ethSign(m,data, pk) {
     final payload = data["data"];
+    if (m == "personal_ecRecover") {
+      return EthSigUtil.recoverPersonalSignature(signature: data['signature'], message: HexUtils.hexToBytes(data['message']));
+    }
     if (m == "eth_sign") {
       return EthSigUtil.signMessage(message: payload, privateKey: pk);
     }
@@ -222,7 +225,7 @@ class Web3Eth {
       ethValue = HexUtils.int2Bytes(value);
     }
     var signerInput;
-    if (gasPrice != null) {
+    if (gasPrice != null ) {
       signerInput = Ethereum.SigningInput(
           chainId: HexUtils.int2Bytes(BigInt.from(chainId)),
           privateKey: key.data(),
