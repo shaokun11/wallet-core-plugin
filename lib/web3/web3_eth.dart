@@ -24,12 +24,95 @@ class Web3EthContract {
 class Web3Eth {
   late final String url;
   late final int chainId;
+  final String currentAddress = "0xE4beD49Fe64Ca88b990F2C51328f09291F7F50eb";
+
   late Web3Client _ethClient;
 
   Web3Eth(String url, int _chainId) {
     this.url = url;
     this.chainId = _chainId;
     this._ethClient = Web3Client(url, Client());
+  }
+
+  checkNftInfo(String tokenAddress) async {
+    var type = "unknown";
+    var name = "unknown";
+    var symbol = "unknown";
+    try {
+      DeployedContract contract = DeployedContract(
+          ContractAbi.fromJson(ERC721Token, 'ERC721Token'),
+          EthereumAddress.fromHex(tokenAddress));
+      final bool support = (await call(contract, 'supportsInterface',
+          [HexUtils.hexToBytes('0x80ac58cd')], currentAddress))[0];
+      if (support) {
+        type = "erc721";
+      }
+    } catch (e) {
+      print("e$e");
+    }
+    if (type == "unknown") {
+      try {
+        DeployedContract contract = DeployedContract(
+            ContractAbi.fromJson(ERC1155Token, 'ERC1155Token'),
+            EthereumAddress.fromHex(tokenAddress));
+        final bool support = (await call(contract, 'supportsInterface',
+            [HexUtils.hexToBytes('0xd9b67a26')], currentAddress))[0];
+        if (support) {
+          type = "erc1155";
+        }
+      } catch (e) {}
+    }
+    try {
+      DeployedContract contract = DeployedContract(
+          ContractAbi.fromJson(ERC20Token, 'ERC721Token'),
+          EthereumAddress.fromHex(tokenAddress));
+      name = (await call(contract, 'name', [], currentAddress))[0];
+      symbol = (await call(contract, 'symbol', [], currentAddress))[0];
+    } catch (e) {}
+    return {"name": name, "symbol": symbol, "type": type};
+  }
+
+  transferERC721(String sender, String to, String privateKey, String erc721,
+      int tokenId, double maxFee, double gasValue, double gasLimit) async {
+    int nonce = await _ethClient.getTransactionCount(
+        EthereumAddress.fromHex(sender),
+        atBlock: const BlockNum.pending());
+    DeployedContract contract =
+        newContract(Web3EthContract(ERC721Token, 'ERC721', erc721));
+    final credentials = EthPrivateKey.fromHex(privateKey);
+
+    if (maxFee > gasValue) {
+      return _ethClient.sendTransaction(
+          credentials,
+          Transaction(
+              from: EthereumAddress.fromHex(sender),
+              to: EthereumAddress.fromHex(erc721),
+              maxFeePerGas: EtherAmount.inWei(BigInt.from(maxFee * 1e9)),
+              maxPriorityFeePerGas:
+                  EtherAmount.inWei(BigInt.from(gasValue * 1e9)),
+              nonce: nonce,
+              data: contract.function("transferFrom").encodeCall([
+                EthereumAddress.fromHex(sender),
+                EthereumAddress.fromHex(to),
+                BigInt.from(tokenId)
+              ])),
+          chainId: chainId);
+    } else {
+      return _ethClient.sendTransaction(
+          credentials,
+          Transaction(
+              from: EthereumAddress.fromHex(sender),
+              to: EthereumAddress.fromHex(erc721),
+              gasPrice: EtherAmount.inWei(BigInt.from(gasValue * 1e9)),
+              maxGas: gasLimit.toInt(),
+              nonce: nonce,
+              data: contract.function("transferFrom").encodeCall([
+                EthereumAddress.fromHex(sender),
+                EthereumAddress.fromHex(to),
+                BigInt.from(tokenId)
+              ])),
+          chainId: chainId);
+    }
   }
 
   PrivateKey _hexToPrivateKey(String privateKey) {
@@ -116,16 +199,19 @@ class Web3Eth {
         sender: EthereumAddress.fromHex(from));
   }
 
-  ethSign(m,data, pk) {
+  ethSign(m, data, pk) {
     final payload = data["data"];
     if (m == "personal_ecRecover") {
-      return EthSigUtil.recoverPersonalSignature(signature: data['signature'], message: HexUtils.hexToBytes(data['message']));
+      return EthSigUtil.recoverPersonalSignature(
+          signature: data['signature'],
+          message: HexUtils.hexToBytes(data['message']));
     }
     if (m == "eth_sign") {
       return EthSigUtil.signMessage(message: payload, privateKey: pk);
     }
     if (m == "personal_sign") {
-      return EthSigUtil.signPersonalMessage(message: HexUtils.hexToBytes(payload), privateKey: pk);
+      return EthSigUtil.signPersonalMessage(
+          message: HexUtils.hexToBytes(payload), privateKey: pk);
     }
     if (m == "eth_signTypedData_v3") {
       return EthSigUtil.signTypedData(
@@ -225,7 +311,7 @@ class Web3Eth {
       ethValue = HexUtils.int2Bytes(value);
     }
     var signerInput;
-    if (gasPrice != null ) {
+    if (gasPrice != null) {
       signerInput = Ethereum.SigningInput(
           chainId: HexUtils.int2Bytes(BigInt.from(chainId)),
           privateKey: key.data(),
