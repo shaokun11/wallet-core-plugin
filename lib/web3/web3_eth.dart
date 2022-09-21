@@ -72,6 +72,120 @@ class Web3Eth {
     return {"name": name, "symbol": symbol, "type": type};
   }
 
+  transferERC1155(
+      String from,
+      String to,
+      String privateKey,
+      String token,
+      int tokenId,
+      int amount,
+      double maxFee,
+      double gasValue,
+      double gasLimit) async {
+    int nonce = await _ethClient.getTransactionCount(
+        EthereumAddress.fromHex(from),
+        atBlock: const BlockNum.pending());
+    DeployedContract contract =
+        newContract(Web3EthContract(ERC1155Token, 'ERC1155', token));
+    final credentials = EthPrivateKey.fromHex(privateKey);
+    if (maxFee > gasValue) {
+      return _ethClient.sendTransaction(
+        credentials,
+        Transaction(
+            from: EthereumAddress.fromHex(from),
+            to: EthereumAddress.fromHex(token),
+            maxFeePerGas: EtherAmount.inWei(BigInt.from(maxFee * 1e9)),
+            maxPriorityFeePerGas:
+                EtherAmount.inWei(BigInt.from(gasValue * 1e9)),
+            nonce: nonce,
+            data: contract.function("safeTransferFrom").encodeCall([
+              EthereumAddress.fromHex(from),
+              EthereumAddress.fromHex(to),
+              BigInt.from(tokenId),
+              BigInt.from(amount),
+              Uint8List.fromList("".codeUnits)
+            ])),
+        chainId: chainId,
+      );
+    } else {
+      return _ethClient.sendTransaction(
+        credentials,
+        Transaction(
+            from: EthereumAddress.fromHex(from),
+            to: EthereumAddress.fromHex(token),
+            gasPrice: EtherAmount.inWei(BigInt.from(gasValue * 1e9)),
+            maxGas: gasLimit.toInt(),
+            nonce: nonce,
+            data: contract.function("safeTransferFrom").encodeCall([
+              EthereumAddress.fromHex(from),
+              EthereumAddress.fromHex(to),
+              BigInt.from(tokenId),
+              BigInt.from(amount),
+              Uint8List.fromList("".codeUnits)
+            ])),
+        chainId: chainId,
+      );
+    }
+  }
+
+  transferERC1155Batch(
+      String from,
+      String to,
+      String privateKey,
+      String token,
+      List<BigInt> ids,
+      List<BigInt> amounts,
+      double maxFee,
+      double gasValue,
+      double gasLimit) async {
+    int nonce = await _ethClient.getTransactionCount(
+        EthereumAddress.fromHex(from),
+        atBlock: const BlockNum.pending());
+    DeployedContract contract =
+    newContract(Web3EthContract(ERC1155Token, 'ERC1155', token));
+    final credentials = EthPrivateKey.fromHex(privateKey);
+
+    if (maxFee > gasValue) {
+      return _ethClient.sendTransaction(
+
+        credentials,
+        Transaction(
+            from: EthereumAddress.fromHex(from),
+            to: EthereumAddress.fromHex(token),
+            maxFeePerGas: EtherAmount.inWei(BigInt.from(maxFee * 1e9)),
+            maxPriorityFeePerGas:
+            EtherAmount.inWei(BigInt.from(gasValue * 1e9)),
+            nonce: nonce,
+            data: contract.function("safeBatchTransferFrom").encodeCall([
+              EthereumAddress.fromHex(from),
+              EthereumAddress.fromHex(to),
+              ids,
+              amounts,
+              Uint8List.fromList("".codeUnits)
+            ])),
+        chainId: chainId,
+      );
+    } else {
+      return _ethClient.sendTransaction(
+        credentials,
+        Transaction(
+            from: EthereumAddress.fromHex(from),
+            to: EthereumAddress.fromHex(token),
+            gasPrice: EtherAmount.inWei(BigInt.from(gasValue * 1e9)),
+            maxGas: gasLimit.toInt(),
+            nonce: nonce,
+            data: contract.function("safeBatchTransferFrom").encodeCall([
+              EthereumAddress.fromHex(from),
+              EthereumAddress.fromHex(to),
+              ids,
+              amounts,
+              Uint8List.fromList("".codeUnits)
+            ])),
+        chainId: chainId,
+      );
+    }
+  }
+
   transferERC721(String sender, String to, String privateKey, String erc721,
       int tokenId, double maxFee, double gasValue, double gasLimit) async {
     int nonce = await _ethClient.getTransactionCount(
